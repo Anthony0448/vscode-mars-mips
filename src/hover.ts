@@ -8,29 +8,35 @@ class MipsyHoverProvider implements vscode.HoverProvider {
             return;
         }
 
-        const wordRange = document.getWordRangeAtPosition(position);
+        const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z_][\w]*/);
         if (!wordRange) {
             return;
         }
 
-        const word = document.getText(wordRange);
-        if (word in allInstructions) {
-            return new vscode.Hover(allInstructions[word]);
+        const rawWord = document.getText(wordRange);
+        const word = rawWord.toLowerCase();
+        const instructionDescription = allInstructions[word];
+        if (instructionDescription !== undefined) {
+            return new vscode.Hover(instructionDescription);
         }
 
-        if (word in directives) {
-            return new vscode.Hover(directives[word]);
+        const directiveDescription = directives[word];
+        if (directiveDescription !== undefined) {
+            return new vscode.Hover(directiveDescription);
         }
 
-        if (word in registers) {
-            return new vscode.Hover(registers[word]);
+        const registerDescription = registers[word];
+        if (registerDescription !== undefined) {
+            return new vscode.Hover(registerDescription);
         }
 
-        const constantDefinition = getConstantDefinitionFor(document, word);
+        const constantDefinition = getConstantDefinitionFor(document, rawWord);
         if (constantDefinition) {
             const definitionLineText = document.lineAt(constantDefinition.range.start.line).text;
             return new vscode.Hover(new vscode.MarkdownString().appendCodeblock(definitionLineText, "mips"));
         }
+
+        return undefined;
     }
 }
 

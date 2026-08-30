@@ -1,3 +1,5 @@
+.DS_Store
+*.vsix
 .vscode/settings.json
 test_workspace/
 out/

@@ -1,88 +1,131 @@
-import * as vscode from 'vscode';
-import { exec } from 'child_process';
-import * as fs from 'fs';
+import { spawn } from "node:child_process";
+import { access } from "node:fs/promises";
+import * as vscode from "vscode";
 
-/**
- * Get active file path.
- * @returns The path to the active file.
- */
-function getActiveFilePath(): string | undefined {
-    const activeEditor = vscode.window.activeTextEditor;
-    if (activeEditor) {
-        const filePath = activeEditor.document.uri.fsPath;
-        return filePath;
+const CONFIGURATION_SECTION = "mars-mips";
+const TASK_TYPE = "mars-mips";
+
+function getJavaPath(resource?: vscode.Uri): string {
+    return (
+        vscode.workspace.getConfiguration(CONFIGURATION_SECTION, resource).get<string>("javaPath", "java").trim() ||
+        "java"
+    );
+}
+
+function getMarsPath(context: vscode.ExtensionContext, resource?: vscode.Uri): string {
+    const configuredPath = vscode.workspace
+        .getConfiguration(CONFIGURATION_SECTION, resource)
+        .get<string>("marsPath")
+        ?.trim();
+
+    return configuredPath || vscode.Uri.joinPath(context.extensionUri, "mars.jar").fsPath;
+}
+
+async function getRunnableDocument(): Promise<vscode.TextDocument | undefined> {
+    if (!vscode.workspace.isTrusted) {
+        await vscode.window.showErrorMessage("Trust this workspace before running MARS code.");
+        return undefined;
+    }
+
+    const document = vscode.window.activeTextEditor?.document;
+    if (!document || document.languageId !== "MIPS") {
+        await vscode.window.showErrorMessage("Open a MIPS file before running MARS.");
+        return undefined;
+    }
+
+    if (document.isUntitled || document.uri.scheme !== "file") {
+        await vscode.window.showErrorMessage("Save the MIPS file before running MARS.");
+        return undefined;
+    }
+
+    if (document.isDirty && !(await document.save())) {
+        await vscode.window.showErrorMessage("The MIPS file could not be saved.");
+        return undefined;
+    }
+
+    return document;
+}
+
+async function ensureMarsExists(marsPath: string): Promise<boolean> {
+    try {
+        await access(marsPath);
+        return true;
+    } catch {
+        await vscode.window.showErrorMessage(
+            "MARS could not be found. Set mars-mips.marsPath to a valid MARS JAR file.",
+        );
+        return false;
     }
 }
 
-/**
- * Gets the path to MARS.
- * @returns The path to MARS jar file.
- */
-function getMarsPath(): string {
-    let marsPath: string | undefined = vscode.workspace.getConfiguration("mars-mips").get("marsPath");
-    if (!marsPath) {
-        let marsExtension = vscode.extensions.getExtension("ahmz1833.mars-mips");
-        marsPath = marsExtension ? marsExtension.extensionPath + "/mars.jar" : "";
-        if (!fs.existsSync(marsPath)) {
-            console.log(`MARS simulator not found. Please set the path to MARS in the settings.`);
-        }
+async function executeMarsTask(
+    context: vscode.ExtensionContext,
+    name: string,
+    marsArguments: readonly string[],
+): Promise<void> {
+    const document = await getRunnableDocument();
+    if (!document) {
+        return;
     }
-    return marsPath;
+
+    const marsPath = getMarsPath(context, document.uri);
+    if (!(await ensureMarsExists(marsPath))) {
+        return;
+    }
+
+    const execution = new vscode.ProcessExecution(
+        getJavaPath(document.uri),
+        ["-jar", marsPath, ...marsArguments, document.uri.fsPath],
+        {
+            cwd: vscode.Uri.joinPath(document.uri, "..").fsPath,
+        },
+    );
+    const task = new vscode.Task(
+        { type: TASK_TYPE, command: name },
+        vscode.TaskScope.Workspace,
+        name,
+        "MARS MIPS",
+        execution,
+    );
+    task.presentationOptions = {
+        clear: true,
+        echo: true,
+        focus: false,
+        panel: vscode.TaskPanelKind.Shared,
+        reveal: vscode.TaskRevealKind.Always,
+    };
+
+    await vscode.tasks.executeTask(task);
 }
 
-/**
- * Gets the MARS terminal.
- * @returns The MARS terminal.
- */
-function getMarsTerminal(): vscode.Terminal {
-    let terminal: vscode.Terminal | undefined = vscode.window.terminals.find(t => t.name === "MARS");
-    if (!terminal) {
-        return vscode.window.createTerminal("MARS");
+async function openMars(context: vscode.ExtensionContext): Promise<void> {
+    const marsPath = getMarsPath(context);
+    if (!(await ensureMarsExists(marsPath))) {
+        return;
     }
-    return terminal;
+
+    const child = spawn(getJavaPath(), ["-jar", marsPath], {
+        detached: true,
+        stdio: "ignore",
+    });
+
+    child.once("error", (error) => {
+        void vscode.window.showErrorMessage(`MARS could not be opened: ${error.message}`);
+    });
+    child.unref();
 }
 
-/**
- * Register extension commands.
- * @param context The extension context.
- */
-export function registerCommands(context: vscode.ExtensionContext) {
-    const marsPath: string = getMarsPath();
-
-    let disposable = vscode.commands.registerCommand('mars-mips.assembleExec', () => {
-        const fileName = getActiveFilePath();
-        let terminal = getMarsTerminal();
-
-        // Assemble and execute
-        terminal.sendText(`java -jar ${marsPath} nc me "${fileName}"`);
-        terminal.show();
-    });
-
-    let assembleDisposable = vscode.commands.registerCommand('mars-mips.assembleMips', () => {
-        const fileName = getActiveFilePath();
-        let terminal = getMarsTerminal();
-
-        // Assemble but don't execute
-        terminal.sendText(`java -jar ${marsPath} me a "${fileName}"`);
-        terminal.show();
-    });
-
-    let debug = vscode.commands.registerCommand('mars-mips.debugMips', () => {
-        const fileName = getActiveFilePath();
-        let terminal = getMarsTerminal();
-
-        terminal.sendText(`java -jar ${marsPath} nc me d "${fileName}"`);
-        terminal.show();
-    });
-
-    let openMars = vscode.commands.registerCommand("mars-mips.openMars", () => {
-        exec(`java -jar ${marsPath}`, (err: any, stdout: string, stderr: string) => {
-            if (err) {
-                vscode.window.showErrorMessage(`Error: ${stderr}`);
-                return;
-            }
-        });
-    });
-    
-    context.subscriptions.push(disposable, assembleDisposable, debug, openMars);
+export function registerCommands(context: vscode.ExtensionContext): void {
+    context.subscriptions.push(
+        vscode.commands.registerCommand("mars-mips.assembleExec", () =>
+            executeMarsTask(context, "Assemble and run", ["nc", "me"]),
+        ),
+        vscode.commands.registerCommand("mars-mips.assembleMips", () =>
+            executeMarsTask(context, "Assemble", ["me", "a"]),
+        ),
+        vscode.commands.registerCommand("mars-mips.debugMips", () =>
+            executeMarsTask(context, "Debug", ["nc", "me", "d"]),
+        ),
+        vscode.commands.registerCommand("mars-mips.openMars", () => openMars(context)),
+    );
 }

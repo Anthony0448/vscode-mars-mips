@@ -1,26 +1,34 @@
 import * as vscode from "vscode";
 import { MipsyCompletionItemProvider } from "./completion";
+import * as commands from "./commands";
 import { MipsyDefinitionProvider, MipsyReferenceProvider } from "./definitions";
+import formatter from "./formatter";
 import { MipsyHoverProvider } from "./hover";
 import { MipsySemanticTokensProvider, tokensLegend } from "./semanticTokens";
-import * as commands from './commands';
-import formatter from './formatter';
 
-var languageID = "MIPS";
-vscode.languages.registerHoverProvider(languageID, new MipsyHoverProvider());
-vscode.languages.registerCompletionItemProvider(
-    languageID,
-    new MipsyCompletionItemProvider(),
-    ...MipsyCompletionItemProvider.triggerCharacters
-);
-vscode.languages.registerDefinitionProvider(languageID, new MipsyDefinitionProvider());
-vscode.languages.registerReferenceProvider(languageID, new MipsyReferenceProvider());
-vscode.languages.registerDocumentSemanticTokensProvider(languageID, new MipsySemanticTokensProvider(), tokensLegend);
+const LANGUAGE_ID = "MIPS";
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
+    const completionProvider = new MipsyCompletionItemProvider();
+
+    context.subscriptions.push(
+        vscode.languages.registerHoverProvider(LANGUAGE_ID, new MipsyHoverProvider()),
+        vscode.languages.registerCompletionItemProvider(
+            LANGUAGE_ID,
+            completionProvider,
+            ...MipsyCompletionItemProvider.triggerCharacters,
+        ),
+        vscode.languages.registerDefinitionProvider(LANGUAGE_ID, new MipsyDefinitionProvider()),
+        vscode.languages.registerReferenceProvider(LANGUAGE_ID, new MipsyReferenceProvider()),
+        vscode.languages.registerDocumentSemanticTokensProvider(
+            LANGUAGE_ID,
+            new MipsySemanticTokensProvider(),
+            tokensLegend,
+        ),
+        vscode.languages.registerDocumentFormattingEditProvider(LANGUAGE_ID, {
+            provideDocumentFormattingEdits: formatter,
+        }),
+    );
+
     commands.registerCommands(context);
-    vscode.languages.registerDocumentFormattingEditProvider(languageID, {
-        provideDocumentFormattingEdits: formatter
-    });
 }
-export function deactivate() { }

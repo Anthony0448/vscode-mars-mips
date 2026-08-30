@@ -1,86 +1,130 @@
-import { TextLine } from 'vscode';
+function splitComment(text: string): { code: string; comment?: string } {
+    let quote: "'" | '"' | undefined;
+    let escaped = false;
 
-type LineProperty = 'directive' | 'data' | 'label' | 'instruction' | 'arguments' | 'comment';
+    for (let index = 0; index < text.length; index++) {
+        const character = text[index];
 
-export default class Line {
-    private static patterns = {
-        label: /^\w+:/,
-        directive: /^\.\w+/,
-        arg: /[\s,]+/,
-        string: /^"([^"\\]*(?:\\.[^"\\]*)*)"/,
-        comment: /[#;].+/
-    };
+        if (escaped) {
+            escaped = false;
+            continue;
+        }
 
-    directive?: string;
+        if (character === "\\" && quote) {
+            escaped = true;
+            continue;
+        }
 
-    data?: string;
+        if (character === quote) {
+            quote = undefined;
+            continue;
+        }
 
-    label?: string;
+        if (!quote && (character === "'" || character === '"')) {
+            quote = character;
+            continue;
+        }
 
-    instruction?: string;
-
-    arguments?: string[];
-
-    comment?: string;
-
-    /**
-     * Check if the line has a property after the property of comparison.
-     * @param property The property to check for.
-     * @returns If the line has the property after the property of comparison.
-     */
-    hasPropertyAfter = (property: LineProperty) => {
-        // If the property doesn't exist, return false
-        if (!this[property]) return false;
-
-        // Get the index of the property of comparison
-        const properties = ['label', 'directive', 'data', 'instruction', 'arguments', 'comment'];
-        const index = properties.indexOf(property);
-
-        // Check if there are any properties after the property of comparison
-        return properties.slice(index + 1).some(p => Array.isArray(this[p as LineProperty]) ? this[p as LineProperty]!.length : this[p as LineProperty]);
+        if (!quote && (character === "#" || character === ";")) {
+            return {
+                code: text.slice(0, index).trimEnd(),
+                comment: text.slice(index),
+            };
+        }
     }
 
-    constructor(line: TextLine) {
-        // Trim the line
-        let text = line.text.trim();
+    return { code: text.trimEnd() };
+}
 
-        // Label
-        let match = text.match(Line.patterns.label);
-        if (match) {
-            this.label = match.at(0);
-            text = text.slice(this.label?.length).trimStart();
+function splitArguments(text: string): string[] {
+    const argumentsList: string[] = [];
+    let start = 0;
+    let quote: "'" | '"' | undefined;
+    let escaped = false;
+    let parenthesisDepth = 0;
+
+    for (let index = 0; index < text.length; index++) {
+        const character = text[index];
+
+        if (escaped) {
+            escaped = false;
+            continue;
         }
 
-        // Directive
-        match = text.match(Line.patterns.directive);
-        if (match) {
-            this.directive = match.at(0);
-            text = text.slice(this.directive?.length).trimStart();
+        if (character === "\\" && quote) {
+            escaped = true;
+            continue;
         }
 
-        // String literal
-        match = text.match(Line.patterns.string);
-        if (match) {
-            let tmp = match.at(0);
-            if (tmp !== undefined) {
-                this.arguments = [tmp];
-                text = text.slice(this.arguments[0].length).trimStart();
+        if (character === quote) {
+            quote = undefined;
+            continue;
+        }
+
+        if (!quote && (character === "'" || character === '"')) {
+            quote = character;
+            continue;
+        }
+
+        if (quote) {
+            continue;
+        }
+
+        if (character === "(") {
+            parenthesisDepth++;
+        } else if (character === ")") {
+            parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+        } else if (character === "," && parenthesisDepth === 0) {
+            const argument = text.slice(start, index).trim();
+            if (argument) {
+                argumentsList.push(argument);
+            }
+            start = index + 1;
+        }
+    }
+
+    const finalArgument = text.slice(start).trim();
+    if (finalArgument) {
+        argumentsList.push(finalArgument);
+    }
+
+    return argumentsList;
+}
+
+export default class Line {
+    public directive?: string;
+
+    public label?: string;
+
+    public instruction?: string;
+
+    public arguments: string[] = [];
+
+    public comment?: string;
+
+    public constructor(line: { readonly text: string }) {
+        const parsed = splitComment(line.text.trim());
+        let text = parsed.code.trim();
+        this.comment = parsed.comment;
+
+        const labelMatch = text.match(/^[A-Za-z_.$][\w.$]*:/);
+        if (labelMatch) {
+            this.label = labelMatch[0];
+            text = text.slice(this.label.length).trimStart();
+        }
+
+        const directiveMatch = text.match(/^\.[A-Za-z_][\w.]*/);
+        if (directiveMatch) {
+            this.directive = directiveMatch[0];
+            text = text.slice(this.directive.length).trimStart();
+        } else {
+            const instructionMatch = text.match(/^\S+/);
+            if (instructionMatch) {
+                this.instruction = instructionMatch[0];
+                text = text.slice(this.instruction.length).trimStart();
             }
         }
 
-        // Comment separator
-        match = text.match(Line.patterns.comment);
-        if (match) {
-            this.comment = match.at(0);
-            text = text.slice(0, match.index).trimEnd();
-        }
-
-        // Instruction & Arguments
-        const args = text.split(Line.patterns.arg).filter(a => a);
-        if (!this.directive) this.instruction = args.shift();
-
-        // Save arguments
-        if (this.arguments) this.arguments.push(...args);
-        else this.arguments = args;
+        this.arguments = splitArguments(text);
     }
 }

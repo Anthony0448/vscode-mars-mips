@@ -1,17 +1,16 @@
 {
     "comments": {
-        "lineComment": "#",
+        "lineComment": "#"
     },
     "onEnterRules": [
         {
-          "beforeText": "^(?!#).*?(?=:)|\\.macro\\s+\\w+|.data",
-          "action": { "indent": "indent" }
+            "beforeText": "^\\s*(?:[A-Za-z_.$][\\w.$]*\\s*:|\\.macro\\s+[A-Za-z_.$][\\w.$]*|\\.(?:k?data|k?text))\\s*(?:[#;].*)?$",
+            "action": { "indent": "indent" }
         }
-      ],
-    // symbols used as brackets
-    "brackets": [
-        ["(", ")"]
     ],
+    "wordPattern": "(-?\\d*\\.\\d\\w*)|([^`~!@#%^&*()=+[{\\]}\\\\|;:'\",.<>/?\\s]+)",
+    // symbols used as brackets
+    "brackets": [["(", ")"]],
     // symbols that are auto closed when typing
     "autoClosingPairs": [
         ["{", "}"],

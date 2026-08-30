@@ -5,7 +5,7 @@ import { getConstantDefinitions, getLabelDefinitions, positionValid } from "./he
 class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
     public static readonly triggerCharacters = [".", "$", "("];
 
-    private sortOrders = {
+    private readonly sortOrders = {
         instruction: 1,
         directive: 4,
         register: 5,
@@ -16,7 +16,7 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
 
     public provideCompletionItems(
         document: vscode.TextDocument,
-        position: vscode.Position
+        position: vscode.Position,
     ): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
         if (!positionValid(document, position)) {
             return [];
@@ -24,8 +24,8 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
 
         const line = document.lineAt(position.line);
         const lineText = line.text;
-        const wordRange = document.getWordRangeAtPosition(position);
-        let firstCharOfWord = wordRange ? wordRange.start.character : position.character;
+        const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z0-9_]+/);
+        const firstCharOfWord = wordRange ? wordRange.start.character : position.character;
         if (firstCharOfWord > 0) {
             const charBefore = lineText.charAt(firstCharOfWord - 1);
             if (charBefore === ".") {
@@ -46,10 +46,9 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
     }
 
     private getInstructionCompletionItems(document: vscode.TextDocument): vscode.CompletionItem[] {
-        const autoIndent = vscode.workspace.getConfiguration(
-            "mars-mips",
-            document
-        ).autoIndentAfterInstructionCompletion;
+        const autoIndent = vscode.workspace
+            .getConfiguration("mars-mips", document)
+            .get<boolean>("autoIndentAfterInstructionCompletion", false);
 
         return Object.keys(allInstructions).map((instruction) => {
             return {
@@ -88,7 +87,7 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
     }
 
     private getLabelCompletionItems(document: vscode.TextDocument): vscode.CompletionItem[] {
-        const items = [];
+        const items: vscode.CompletionItem[] = [];
         const labels = getLabelDefinitions(document);
         for (const label of labels) {
             items.push({
@@ -101,7 +100,7 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
     }
 
     private getConstantCompletionItems(document: vscode.TextDocument): vscode.CompletionItem[] {
-        const items = [];
+        const items: vscode.CompletionItem[] = [];
         const constants = getConstantDefinitions(document);
         for (const constant of constants) {
             items.push({
@@ -125,12 +124,14 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
                 }
             }
 
-            const requiredTabCount = Math.ceil((targetColumn - currentColumn) / tabSize);
+            const requiredTabCount = Math.max(1, Math.ceil((targetColumn - currentColumn) / tabSize));
             return "\t".repeat(requiredTabCount);
         }
 
-        let tabSize = vscode.workspace.getConfiguration("editor", document).tabSize;
-        let commentColumn = vscode.workspace.getConfiguration("mars-mips", document).snippetCommentColumn ?? 32;
+        const tabSize = vscode.workspace.getConfiguration("editor", document).get<number>("tabSize", 4);
+        const commentColumn = vscode.workspace
+            .getConfiguration("mars-mips", document)
+            .get<number>("snippetCommentColumn", 32);
 
         // Ideally I would like to abstract this to something similar to objects in constants.ts, but things get
         // complicated with with that need to be evaluated at runtime.

@@ -1,14 +1,18 @@
 {
-    "name": "mars-mips",
-    "displayName": "MARS MIPS Support for VSCode",
+    "name": "mars-mips-fork",
+    "displayName": "MARS MIPS Support (Fork)",
     "description": "Provides syntax highlighting, semantic highlighting, snippets, and running with MARS MIPS Simulator.",
     "version": "1.0.4",
-    "publisher": "ahmz1833",
-    "homepage": "https://github.com/ahmz1833/vscode-mars-mips",
+    "publisher": "anthony0448",
+    "license": "SEE LICENSE IN LICENSE.md",
+    "homepage": "https://github.com/Anthony0448/vscode-mars-mips",
+    "bugs": {
+        "url": "https://github.com/Anthony0448/vscode-mars-mips/issues"
+    },
     "icon": "images/icon.png",
     "repository": {
         "type": "git",
-        "url": "https://github.com/ahmz1833/vscode-mars-mips.git"
+        "url": "https://github.com/Anthony0448/vscode-mars-mips.git"
     },
     "engines": {
         "vscode": "^1.92.0"
@@ -25,7 +29,10 @@
         "assembly",
         "asm"
     ],
-    "main": "./out/mips",
+    "main": "./out/mips.js",
+    "extensionKind": [
+        "workspace"
+    ],
     "contributes": {
         "languages": [
             {
@@ -63,14 +70,14 @@
                     "label": [
                         "support.class.label.mips"
                     ],
-                    "constant": [
+                    "variable.readonly": [
                         "entity.name.function.constant.mips"
                     ]
                 }
             }
         ],
         "configuration": {
-            "title": "MARS MIPS Support for VSCode",
+            "title": "MARS MIPS Support (Fork)",
             "properties": {
                 "mars-mips.autoIndentAfterInstructionCompletion": {
                     "type": "boolean",
@@ -82,6 +89,24 @@
                     "default": 32,
                     "minimum": 0,
                     "description": "Column at which to align comments in snippets. The column is calculated as an offset from the starting column of the snippet.\nShould be a multiple of the tab size, which for mips should be 8."
+                },
+                "mars-mips.formatterCommentColumn": {
+                    "type": "integer",
+                    "default": 32,
+                    "minimum": 1,
+                    "description": "Preferred column for inline comments produced by the document formatter. Longer statements keep at least two spaces before the comment."
+                },
+                "mars-mips.javaPath": {
+                    "type": "string",
+                    "default": "java",
+                    "scope": "machine-overridable",
+                    "description": "Path to the Java executable used to run MARS."
+                },
+                "mars-mips.marsPath": {
+                    "type": "string",
+                    "default": "",
+                    "scope": "machine-overridable",
+                    "description": "Absolute path to a MARS JAR file. Leave empty to use the bundled simulator."
                 }
             }
         },
@@ -89,21 +114,28 @@
             {
                 "command": "mars-mips.assembleExec",
                 "title": "Assemble and run",
+                "category": "MARS MIPS",
+                "enablement": "isWorkspaceTrusted && resourceLangId == MIPS && resourceScheme == file",
                 "icon": "$(run)"
             },
             {
                 "command": "mars-mips.assembleMips",
                 "title": "Assemble",
+                "category": "MARS MIPS",
+                "enablement": "isWorkspaceTrusted && resourceLangId == MIPS && resourceScheme == file",
                 "icon": "$(test-view-icon)"
             },
             {
                 "command": "mars-mips.debugMips",
                 "title": "Debug (Run with extra info)",
+                "category": "MARS MIPS",
+                "enablement": "isWorkspaceTrusted && resourceLangId == MIPS && resourceScheme == file",
                 "icon": "$(debug-alt)"
             },
             {
                 "command": "mars-mips.openMars",
                 "title": "Open Mars",
+                "category": "MARS MIPS",
                 "icon": "$(project)"
             }
         ],
@@ -157,15 +189,18 @@
         }
     },
     "capabilities": {
-        "hoverProvider": true,
-        "completionProvider": {
-            "resolveProvider": true
+        "untrustedWorkspaces": {
+            "supported": "limited",
+            "description": "Language features remain available, but running workspace code with MARS requires trust.",
+            "restrictedConfigurations": [
+                "mars-mips.javaPath",
+                "mars-mips.marsPath"
+            ]
         },
-        "definitionProvider": true,
-        "referencesProvider": true,
-        "documentSymbolProvider": true,
-        "renameProvider": true,
-        "semanticTokensProvider": true
+        "virtualWorkspaces": {
+            "supported": "limited",
+            "description": "Language features remain available, but MARS can run only saved files on disk."
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
@@ -175,19 +210,21 @@
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
-        "lint": "eslint src --ext ts",
-        "test": "node ./out/test/runTest.js"
+        "lint": "eslint src",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test": "node --test out/test"
     },
     "devDependencies": {
-        "@types/mocha": "^10.0.2",
-        "@types/node": "^22.1.0",
-        "@types/vscode": "^1.92.0",
-        "@vscode/test-electron": "^2.3.4",
-        "eslint": "^9.0.0",
-        "prettier": "^3.3.3",
-        "typescript": "^5.5.4",
-        "ts-loader": "^9.4.4",
-        "webpack": "^5.95.0",
+        "@eslint/js": "^9.39.5",
+        "@types/node": "^20.19.43",
+        "@types/vscode": "~1.92.0",
+        "eslint": "^9.39.5",
+        "prettier": "^3.9.6",
+        "ts-loader": "^9.6.2",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.68.0",
+        "webpack": "^5.110.2",
         "webpack-cli": "^5.1.4"
     }
 }
