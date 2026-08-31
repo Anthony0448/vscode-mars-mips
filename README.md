@@ -1,6 +1,8 @@
-# MARS MIPS Support (Fork)
+# MARS MIPS Toolkit
 
-MARS MIPS Support provides language tooling and simulator commands for MIPS assembly files in Visual Studio Code.
+MARS MIPS Toolkit provides language tooling and simulator commands for MIPS assembly files in Visual Studio Code.
+
+This maintained fork modernizes the original extension for current VS Code releases, improves formatter correctness and output, and makes MARS execution safer and configurable. See [CHANGELOG.md](CHANGELOG.md) for the complete fork history.
 
 ## Features
 
@@ -42,12 +44,15 @@ Run commands save dirty files before starting and use VS Code process tasks, so 
 ## Development
 
 ```sh
-npm install
+npm ci
 npm test
-npm run package
+npm run format:check
+npm run package:vsix
 ```
 
-`npm test` type-checks, bundles, lints, and runs the parser regression tests. `npm run format:check` verifies repository formatting.
+`npm test` type-checks, bundles, lints, and runs the parser regression tests. `npm run format:check` verifies repository formatting. `npm run package:vsix` creates an installable `mars-mips-toolkit-<version>.vsix` file.
+
+For local installation and Marketplace release instructions, see [PUBLISHING.md](PUBLISHING.md).
 
 ## Known limitations
 

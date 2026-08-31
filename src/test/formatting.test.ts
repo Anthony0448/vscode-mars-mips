@@ -61,4 +61,42 @@ void describe("formatLines", () => {
 
         assert.deepEqual(formatted, [".data", "", "value:  .word   1"]);
     });
+
+    void it("removes isolated spacer lines while retaining paragraph breaks", () => {
+        const formatted = format([
+            ".text",
+            "",
+            "li $v0, 4",
+            "",
+            "la $a0, prompt",
+            "",
+            "syscall",
+            "",
+            "",
+            "",
+            "li $v0, 5 # input an integer",
+            "",
+            "syscall # read the integer",
+            "",
+            "",
+            "printResult:",
+            "",
+            "la $s0, X",
+        ]);
+
+        assert.deepEqual(formatted, [
+            ".text",
+            "",
+            "    li      $v0, 4",
+            "    la      $a0, prompt",
+            "    syscall",
+            "",
+            `    li      $v0, 5${" ".repeat(14)}# input an integer`,
+            `    syscall${" ".repeat(21)}# read the integer`,
+            "",
+            "printResult:",
+            "    la      $s0, X",
+        ]);
+        assert.deepEqual(format(formatted), formatted);
+    });
 });

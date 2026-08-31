@@ -1,0 +1,32 @@
+name: Publish VS Code extension
+
+on:
+    workflow_dispatch:
+        inputs:
+            confirmation:
+                description: Type publish to release the package version to the Marketplace
+                required: true
+                type: string
+
+permissions:
+    contents: read
+
+jobs:
+    publish:
+        if: github.event.inputs.confirmation == 'publish'
+        runs-on: ubuntu-latest
+        environment: vscode-marketplace
+        permissions:
+            contents: read
+            id-token: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: npm
+            - run: npm ci
+            - run: npm test
+            - run: npm run format:check
+            - run: npm run package:vsix
+            - run: npm run publish:marketplace -- --oidc --packagePath mars-mips-toolkit-*.vsix

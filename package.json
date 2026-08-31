@@ -1,8 +1,8 @@
 {
-    "name": "mars-mips-fork",
-    "displayName": "MARS MIPS Support (Fork)",
-    "description": "Provides syntax highlighting, semantic highlighting, snippets, and running with MARS MIPS Simulator.",
-    "version": "1.0.4",
+    "name": "mars-mips-toolkit",
+    "displayName": "MARS MIPS Toolkit",
+    "description": "MIPS language support, formatting, snippets, navigation, and integrated MARS simulator commands.",
+    "version": "1.1.0",
     "publisher": "anthony0448",
     "license": "SEE LICENSE IN LICENSE.md",
     "homepage": "https://github.com/Anthony0448/vscode-mars-mips",
@@ -77,7 +77,7 @@
             }
         ],
         "configuration": {
-            "title": "MARS MIPS Support (Fork)",
+            "title": "MARS MIPS Toolkit",
             "properties": {
                 "mars-mips.autoIndentAfterInstructionCompletion": {
                     "type": "boolean",
@@ -207,6 +207,9 @@
         "compile": "webpack",
         "watch": "webpack --watch",
         "package": "webpack --mode production --devtool hidden-source-map",
+        "package:vsix": "vsce package",
+        "package:list": "vsce ls",
+        "publish:marketplace": "vsce publish",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
         "pretest": "npm run compile-tests && npm run compile && npm run lint",
@@ -215,10 +218,14 @@
         "format:check": "prettier --check .",
         "test": "node --test out/test"
     },
+    "vsce": {
+        "dependencies": false
+    },
     "devDependencies": {
         "@eslint/js": "^9.39.5",
         "@types/node": "^20.19.43",
         "@types/vscode": "~1.92.0",
+        "@vscode/vsce": "^3.9.2",
         "eslint": "^9.39.5",
         "prettier": "^3.9.6",
         "ts-loader": "^9.6.2",

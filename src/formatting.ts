@@ -73,6 +73,43 @@ function padForComment(text: string, commentColumn: number, tabSize: number): st
     return text + " ".repeat(Math.max(2, commentColumn - width));
 }
 
+function normalizeBlankLines(formattedLines: readonly string[], sourceLines: readonly Line[]): string[] {
+    const hasParagraphBreaks = formattedLines.some((line, index) => !line && index > 0 && !formattedLines[index - 1]);
+
+    if (!hasParagraphBreaks) {
+        return formattedLines.filter((line, index) => line || index === 0 || formattedLines[index - 1] !== "");
+    }
+
+    const normalized: string[] = [];
+    for (let index = 0; index < formattedLines.length;) {
+        const line = formattedLines[index];
+        if (line) {
+            normalized.push(line);
+            index += 1;
+            continue;
+        }
+
+        let nextContent = index;
+        while (nextContent < formattedLines.length && !formattedLines[nextContent]) {
+            nextContent += 1;
+        }
+
+        const blankCount = nextContent - index;
+        const previousLine = sourceLines[index - 1];
+        const nextLine = sourceLines[nextContent];
+        const interruptsCode =
+            nextLine?.instruction !== undefined &&
+            (previousLine?.instruction !== undefined || previousLine?.label !== undefined);
+        const shouldKeep = blankCount > 1 || !interruptsCode;
+        if (shouldKeep && normalized.length > 0 && nextContent < formattedLines.length) {
+            normalized.push("");
+        }
+        index = nextContent;
+    }
+
+    return normalized;
+}
+
 export function formatLines(lines: readonly Line[], options: MipsFormattingOptions): string[] {
     const tabSize = Math.max(1, options.tabSize);
     const commentColumn = Math.max(1, options.commentColumn);
@@ -125,5 +162,5 @@ export function formatLines(lines: readonly Line[], options: MipsFormattingOptio
         return result.trimEnd();
     });
 
-    return formattedLines.filter((line, index) => line || index === 0 || formattedLines[index - 1] !== "");
+    return normalizeBlankLines(formattedLines, lines);
 }
