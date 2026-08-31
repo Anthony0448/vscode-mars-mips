@@ -1,37 +1,54 @@
 # MARS MIPS Toolkit
 
-MARS MIPS Toolkit provides language tooling and simulator commands for MIPS assembly files in Visual Studio Code.
+Write, understand, format, and run MIPS assembly without leaving Visual Studio Code.
 
-This maintained fork modernizes the original extension for current VS Code releases, improves formatter correctness and output, and makes MARS execution safer and configurable. See [CHANGELOG.md](CHANGELOG.md) for the complete fork history.
+MARS MIPS Toolkit combines language-aware editing with integrated commands for the MARS simulator. It supports `.asm`, `.s`, `.mips`, and `.spim` files and is designed for coursework, experimentation, and everyday MIPS assembly development.
 
-## Features
+## Highlights
+
+### Write with language-aware editing
 
 - Syntax and semantic highlighting for instructions, registers, labels, and constants
 - Context-aware completion for instructions, directives, registers, labels, constants, and syscall snippets
-- Hover documentation and go-to-definition/reference support
-- Document formatting that respects the editor's tab size, indentation style, and line endings
-- Assemble, run, debug, and launch commands for the bundled MARS simulator
+- Hover documentation for instructions and symbols
+- Go to Definition and Find All References for document-local labels and constants
 
-The extension recognizes `.asm`, `.s`, `.mips`, and `.spim` files.
+### Keep assembly readable
 
-## Requirements
+- Format an entire MIPS document with **Format Document**
+- Respect the editor's tab size, tabs-versus-spaces preference, and line endings
+- Align labels, directives, instructions, operands, and inline comments
+- Preserve strings, character literals, and address expressions while normalizing whitespace
+- Remove excessive instruction spacing while retaining logical paragraph breaks
 
-Install a Java runtime and ensure `java` is available on your `PATH`. You can configure a different executable with `mars-mips.javaPath`.
+### Run with MARS
 
-## Running MARS
+- Assemble, run, and inspect MIPS programs from the editor
+- Launch the graphical MARS simulator with the bundled JAR or a custom installation
+- Save dirty source files automatically before execution
+- Pass Java, JAR, and source paths safely without shell interpolation
 
-Open a saved MIPS file and use one of these commands:
+## Quick start
 
-| Key  | Command                     | Behavior                             |
+1. Install a Java runtime and make sure `java` is available on your `PATH`.
+2. Open a saved MIPS assembly file.
+3. Press `F5` to assemble and run it, or open the Command Palette and search for **MARS MIPS**.
+4. Use **Format Document** to apply the MIPS formatter.
+
+If Java or MARS is installed somewhere else, configure `mars-mips.javaPath` or `mars-mips.marsPath` in VS Code settings.
+
+## Commands
+
+| Key  | Command                     | Description                          |
 | ---- | --------------------------- | ------------------------------------ |
-| `F4` | MARS MIPS: Assemble         | Assemble without running             |
-| `F5` | MARS MIPS: Assemble and run | Assemble and execute                 |
+| `F4` | MARS MIPS: Assemble         | Assemble the active file             |
+| `F5` | MARS MIPS: Assemble and run | Assemble and execute the active file |
 | `F6` | MARS MIPS: Debug            | Run with additional MARS diagnostics |
 | `F7` | MARS MIPS: Open MARS        | Launch the graphical simulator       |
 
-Run commands save dirty files before starting and use VS Code process tasks, so file paths are passed to Java without shell interpolation.
+MARS execution is available for saved files in trusted, file-backed workspaces. Command-line tasks run from the source file's directory so relative file behavior remains predictable.
 
-## Settings
+## Configuration
 
 | Setting                                          | Default     | Description                                      |
 | ------------------------------------------------ | ----------- | ------------------------------------------------ |
@@ -41,23 +58,72 @@ Run commands save dirty files before starting and use VS Code process tasks, so 
 | `mars-mips.javaPath`                             | `java`      | Java executable used to start MARS               |
 | `mars-mips.marsPath`                             | bundled JAR | Absolute path to a different MARS JAR            |
 
-## Development
+## What changed in this maintained fork
+
+MARS MIPS Toolkit began as a fork of **MARS MIPS Support**. Version 1.1.0 gives the project a distinct identity and substantially updates the extension for current VS Code development and publishing standards.
+
+### Modernized VS Code integration
+
+- Updated the extension manifest, entry point, command metadata, menus, semantic token scopes, and workspace capabilities
+- Registered and disposed language providers through the current extension lifecycle
+- Added explicit behavior for untrusted and virtual workspaces
+- Migrated to strict TypeScript, ESLint's flat configuration, current build tooling, and a production Webpack bundle
+
+### Safer and more configurable MARS execution
+
+- Replaced shell command strings with argument-safe VS Code process tasks
+- Added validation for workspace trust, active language, saved files, failed saves, and missing JARs
+- Added configurable Java and MARS paths while retaining the bundled simulator
+- Improved task working directories, presentation, and graphical simulator startup
+
+### Improved formatter and parser
+
+- Added quote-aware parsing for strings and character literals containing commas or comment markers
+- Preserved parenthesized address expressions such as `4($sp)`
+- Improved alignment, operand spacing, inline-comment placement, and blank-line normalization
+- Made formatting idempotent and responsive to VS Code's requested formatting options
+- Added regression coverage based on real MIPS coursework examples
+
+### Corrected language features
+
+- Fixed definition, reference, constant, and identifier-boundary handling
+- Made semantic token output deterministic and removed duplicate tokens
+- Improved completion trigger behavior, typed configuration access, hover spelling, and shared comment parsing
+
+### Added release engineering
+
+- Added automated tests, linting, formatting checks, and CI packaging
+- Added a minimal and validated VSIX payload
+- Added a manual, protected Marketplace publishing workflow using short-lived OIDC credentials
+- Documented every fork change and the repeatable build and release process
+
+See [CHANGELOG.md](CHANGELOG.md) for the complete release history and technical change list.
+
+## Requirements and workspace support
+
+- Visual Studio Code 1.92 or newer
+- Java available locally or in the active remote extension host
+- A saved, file-backed MIPS document for MARS execution
+
+Language features remain available in untrusted and virtual workspaces. Running local code with MARS is disabled there for safety.
+
+## Known limitations
+
+- Definitions, references, and semantic label/constant highlighting are document-local; multi-file symbol resolution is not supported.
+- The extension does not provide a source-level debugger or register/memory visualization inside VS Code.
+- Java is required to run the bundled MARS simulator.
+
+## Development and local installation
 
 ```sh
 npm ci
 npm test
 npm run format:check
 npm run package:vsix
+code --install-extension mars-mips-toolkit-1.1.0.vsix --force
 ```
 
-`npm test` type-checks, bundles, lints, and runs the parser regression tests. `npm run format:check` verifies repository formatting. `npm run package:vsix` creates an installable `mars-mips-toolkit-<version>.vsix` file.
-
-For local installation and Marketplace release instructions, see [PUBLISHING.md](PUBLISHING.md).
-
-## Known limitations
-
-- Definitions, references, and semantic label/constant highlighting are document-local; multi-file symbol resolution is not supported.
-- MARS execution requires a local or remote workspace with Java available and is disabled in untrusted and virtual workspaces.
+`npm test` type-checks, bundles, lints, and runs the parser and formatter regression tests. For Marketplace setup, tagging, and release instructions, see [PUBLISHING.md](PUBLISHING.md).
 
 ## Credits
 
@@ -65,3 +131,5 @@ For local installation and Marketplace release instructions, see [PUBLISHING.md]
 - Formatter derived from [ASM Formatter v1.2.16](https://github.com/AngaBlue/asm-formatter/tree/v1.2.16)
 - MARS commands and simulator package derived from [vscode-mips](https://github.com/triciopo/vscode-mips)
 - Additional work from [vscode-mips-mars](https://github.com/duskmoon314/vscode-mips-mars) and [mpis-lauguage-support](https://github.com/Cheuring/mpis-lauguage-support)
+
+MARS MIPS Toolkit is maintained independently. See [LICENSE.md](LICENSE.md) for licensing information.
