@@ -11,7 +11,8 @@ All notable changes made in this fork are documented here. The fork began from u
 - Replaced the 23 instructions that had a blank description, including `la` and `li`, which previously produced an empty hover.
 - Added an operand-order example to every instruction hover, so the `$Rd`/`$Rs`/`$Rt` placeholders in the descriptions have something concrete to refer to, and labelled pseudo-instructions as such.
 - Extended register hovers to cover numbers and floating point registers: `$9` resolves to `$t1`, and every general purpose register reports its number and whether it survives a function call.
-- Removed the mipsy-only mnemonics (`begin`, `end`, `push`, `pop`, `copy`, `incr`, `decr`, `mod`, `modu`, `zeb`, `zeh`, `bal`, and the `dbg_print_*` family), which MARS cannot assemble.
+- Removed the 15 mipsy-only mnemonics that MARS cannot assemble: `bal`, `begin`, `copy`, `decr`, `end`, `incr`, `mod`, `modu`, `pop`, `push`, `zeb`, `zeh`, and the `dbg_print_char`, `dbg_print_int`, and `dbg_print_str` debugging family.
+- Removed the 5 MIPS32r2 mnemonics that MARS reports as unrecognized operators: `rotr`, `rotrv`, `seb`, `seh`, and `wsbh`.
 - Added the `.extern`, `.set`, `.eqv`, and `.include` directives.
 
 ### Highlighting
