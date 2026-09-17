@@ -2,6 +2,29 @@
 
 All notable changes made in this fork are documented here. The fork began from upstream version 1.0.4; the inherited upstream history remains available in the repository's Git history.
 
+## [1.2.0] - 2026-09-17
+
+### Instruction, directive, and register documentation
+
+- Rebuilt the instruction, directive, and register tables from the bundled MARS simulator's own data, so hovers and completion now describe all 187 mnemonics MARS accepts instead of 130.
+- Added the previously missing floating point, coprocessor, and unaligned load/store instructions, along with the `$f0`-`$f31` floating point registers.
+- Replaced the 23 instructions that had a blank description, including `la` and `li`, which previously produced an empty hover.
+- Added an operand-order example to every instruction hover, so the `$Rd`/`$Rs`/`$Rt` placeholders in the descriptions have something concrete to refer to, and labelled pseudo-instructions as such.
+- Extended register hovers to cover numbers and floating point registers: `$9` resolves to `$t1`, and every general purpose register reports its number and whether it survives a function call.
+- Removed the mipsy-only mnemonics (`begin`, `end`, `push`, `pop`, `copy`, `incr`, `decr`, `mod`, `modu`, `zeb`, `zeh`, `bal`, and the `dbg_print_*` family), which MARS cannot assemble.
+- Added the `.extern`, `.set`, `.eqv`, and `.include` directives.
+
+### Highlighting
+
+- Matched mnemonics and directives case-insensitively, as MARS does, so `LA`, `BEQ`, and `.DATA` are now highlighted. Register names stay case-sensitive because MARS rejects `$T1`.
+- Scoped registers as `variable.language.register.*` instead of `keyword.operator.register.*`. VS Code's default dark themes paint `keyword.operator` in the editor's own foreground colour, so every register rendered as plain text; they are now coloured like the language-defined values they are.
+- Stopped a mnemonic from being highlighted when it is only the leading part of a longer word such as `add.s` or `adder`.
+- Resolved hovers by sigil, so a label named `data` or `at` is no longer described as a directive or a register.
+
+### Tooling and quality
+
+- Added a grammar regression suite that tokenizes sample MIPS with the same TextMate and Oniguruma engines VS Code uses, and a data suite asserting every documented term has a description.
+
 ## [1.1.0] - 2026-08-30
 
 ### Project identity and distribution
@@ -46,4 +69,5 @@ All notable changes made in this fork are documented here. The fork began from u
 - Added Node's built-in test runner with parser and formatter regression suites.
 - Standardized source, snippet, language-configuration, and Webpack formatting.
 
-[1.1.0]: https://github.com/Anthony0448/vscode-mars-mips/compare/19065e493d1a518d81b6d136347e1b187794f725...v1.1.0
+[1.2.0]: https://github.com/Anthony0448/vscode-mars-mips/compare/1.1.0...1.2.0
+[1.1.0]: https://github.com/Anthony0448/vscode-mars-mips/compare/19065e493d1a518d81b6d136347e1b187794f725...1.1.0

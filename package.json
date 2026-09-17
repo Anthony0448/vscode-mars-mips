@@ -2,7 +2,7 @@
     "name": "mars-mips-toolkit",
     "displayName": "MARS MIPS Toolkit",
     "description": "MIPS language support, formatting, snippets, navigation, and integrated MARS simulator commands.",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "publisher": "anthony0448",
     "license": "SEE LICENSE IN LICENSE.md",
     "homepage": "https://github.com/Anthony0448/vscode-mars-mips",
@@ -231,6 +231,8 @@
         "ts-loader": "^9.6.2",
         "typescript": "^5.9.3",
         "typescript-eslint": "^8.68.0",
+        "vscode-oniguruma": "2.0.1",
+        "vscode-textmate": "9.3.2",
         "webpack": "^5.110.2",
         "webpack-cli": "^5.1.4"
     }

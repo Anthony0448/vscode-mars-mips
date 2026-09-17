@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { allInstructions, directives, registers } from "./constants";
+import { describeDirective, describeInstruction, describeRegister } from "./documentation";
 import { getConstantDefinitions, getLabelDefinitions, positionValid } from "./helpers";
 
 class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
@@ -50,24 +51,25 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
             .getConfiguration("mars-mips", document)
             .get<boolean>("autoIndentAfterInstructionCompletion", false);
 
-        return Object.keys(allInstructions).map((instruction) => {
+        return Object.entries(allInstructions).map(([mnemonic, instruction]) => {
+            const takesOperands = instruction.syntax.includes(" ");
             return {
-                label: instruction,
+                label: mnemonic,
                 kind: vscode.CompletionItemKind.Function,
-                detail: allInstructions[instruction],
-                insertText:
-                    instruction + (autoIndent && !["syscall", "begin", "end"].includes(instruction) ? "\t" : ""),
+                detail: instruction.syntax,
+                documentation: describeInstruction(mnemonic, instruction),
+                insertText: mnemonic + (autoIndent && takesOperands ? "\t" : ""),
                 sortText: this.sortOrders.instruction.toString(),
             };
         });
     }
 
     private getDirectiveCompletionItems(prependSymbol: boolean): vscode.CompletionItem[] {
-        return Object.keys(directives).map((directive) => {
+        return Object.entries(directives).map(([directive, description]) => {
             return {
                 label: "." + directive,
                 kind: vscode.CompletionItemKind.Field,
-                detail: directives[directive],
+                documentation: describeDirective(directive, description),
                 insertText: prependSymbol ? "." + directive : directive,
                 sortText: prependSymbol ? this.sortOrders.directive.toString() : "." + directive,
             };
@@ -75,13 +77,14 @@ class MipsyCompletionItemProvider implements vscode.CompletionItemProvider {
     }
 
     private getRegisterCompletionItems(prependSymbol: boolean): vscode.CompletionItem[] {
-        return Object.keys(registers).map((register) => {
+        return Object.entries(registers).map(([name, register]) => {
             return {
-                label: "$" + register,
+                label: "$" + name,
                 kind: vscode.CompletionItemKind.Value,
-                detail: registers[register],
-                insertText: prependSymbol ? "$" + register : register,
-                sortText: prependSymbol ? this.sortOrders.register.toString() : "$" + register,
+                detail: "$" + register.number,
+                documentation: describeRegister({ name, register }),
+                insertText: prependSymbol ? "$" + name : name,
+                sortText: prependSymbol ? this.sortOrders.register.toString() : "$" + name,
             };
         });
     }

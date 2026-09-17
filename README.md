@@ -8,9 +8,10 @@ MARS MIPS Toolkit combines language-aware editing with integrated commands for t
 
 ### Write with language-aware editing
 
-- Syntax and semantic highlighting for instructions, registers, labels, and constants
+- Syntax and semantic highlighting for the full MARS instruction set, registers, labels, and constants
+- Hover documentation for every instruction, directive, and register, showing the operand order alongside the description
+- Register hovers cover names, numbers, and floating point registers, so `$t1`, `$9`, and `$f12` are all explained
 - Context-aware completion for instructions, directives, registers, labels, constants, and syscall snippets
-- Hover documentation for instructions and symbols
 - Go to Definition and Find All References for document-local labels and constants
 
 ### Keep assembly readable
@@ -60,7 +61,16 @@ MARS execution is available for saved files in trusted, file-backed workspaces. 
 
 ## What changed in this maintained fork
 
-MARS MIPS Toolkit began as a fork of **MARS MIPS Support**. Version 1.1.0 gives the project a distinct identity and substantially updates the extension for current VS Code development and publishing standards.
+MARS MIPS Toolkit began as a fork of **MARS MIPS Support**. Version 1.1.0 gives the project a distinct identity and substantially updates the extension for current VS Code development and publishing standards. Version 1.2.0 rebuilds the language reference from the bundled simulator's own data.
+
+### Complete MARS language reference
+
+- Generated the instruction, directive, and register tables from the bundled MARS simulator, covering all 187 mnemonics it accepts
+- Added the floating point, coprocessor, and unaligned load/store instructions, along with the `$f0`-`$f31` registers
+- Gave every instruction hover an operand-order example, and filled in the descriptions that were previously blank
+- Extended register hovers to names, numbers, and floating point registers, including each register's calling convention
+- Matched mnemonics and directives case-insensitively, as MARS does, while keeping register names case-sensitive
+- Dropped the mipsy-only mnemonics that MARS cannot assemble
 
 ### Modernized VS Code integration
 
@@ -120,7 +130,7 @@ npm ci
 npm test
 npm run format:check
 npm run package:vsix
-code --install-extension mars-mips-toolkit-1.1.0.vsix --force
+code --install-extension mars-mips-toolkit-1.2.0.vsix --force
 ```
 
 `npm test` type-checks, bundles, lints, and runs the parser and formatter regression tests. For Marketplace setup, tagging, and release instructions, see [PUBLISHING.md](PUBLISHING.md).

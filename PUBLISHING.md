@@ -26,7 +26,7 @@ npm run package:vsix
 The final command creates `mars-mips-toolkit-<version>.vsix`. Install that exact artifact into VS Code for a smoke test:
 
 ```sh
-code --install-extension mars-mips-toolkit-1.1.0.vsix --force
+code --install-extension mars-mips-toolkit-1.2.0.vsix --force
 ```
 
 Confirm that an `.asm` file receives MIPS highlighting, completion, navigation, and formatting. If Java is installed, also verify that the MARS commands either run successfully or report a useful configuration error.
@@ -39,15 +39,15 @@ Confirm that an `.asm` file receives MIPS highlighting, completion, navigation, 
 
 The expected Marketplace identifier is `anthony0448.mars-mips-toolkit`.
 
-## Publish version 1.1.0
+## Publish version 1.2.0
 
-1. Make sure `package.json` and `CHANGELOG.md` describe version `1.1.0` and the working tree is clean.
+1. Make sure `package.json` and `CHANGELOG.md` describe version `1.2.0` and the working tree is clean.
 2. Run the local validation commands above and install the resulting VSIX.
 3. Commit the release preparation, then create and push the release tag:
 
     ```sh
-    git tag -a v1.1.0 -m "Release 1.1.0"
-    git push origin main v1.1.0
+    git tag -a 1.2.0 -m "Release 1.2.0"
+    git push origin main 1.2.0
     ```
 
 4. Open **Actions > Publish VS Code extension > Run workflow**, enter `publish`, and start the workflow.

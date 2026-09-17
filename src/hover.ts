@@ -1,6 +1,20 @@
 import * as vscode from "vscode";
-import { allInstructions, directives, registers } from "./constants";
+import {
+    describeDirective,
+    describeInstruction,
+    describeRegister,
+    findDirective,
+    findInstruction,
+    findRegister,
+} from "./documentation";
 import { getConstantDefinitionFor, positionValid } from "./helpers";
+
+// Probed in order of specificity: the "$" and "." sigils identify a register or
+// a directive unambiguously, so a label called "data" is not mistaken for one.
+const registerPattern = /\$[A-Za-z0-9]+/;
+const directivePattern = /\.[A-Za-z_]\w*/;
+const mnemonicPattern = /[A-Za-z_][\w.]*/;
+const identifierPattern = /[A-Za-z_]\w*/;
 
 class MipsyHoverProvider implements vscode.HoverProvider {
     public provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.Hover> {
@@ -8,32 +22,42 @@ class MipsyHoverProvider implements vscode.HoverProvider {
             return;
         }
 
-        const wordRange = document.getWordRangeAtPosition(position, /[A-Za-z_][\w]*/);
-        if (!wordRange) {
-            return;
+        const registerRange = document.getWordRangeAtPosition(position, registerPattern);
+        if (registerRange) {
+            const register = findRegister(document.getText(registerRange));
+            return register && new vscode.Hover(describeRegister(register), registerRange);
         }
 
-        const rawWord = document.getText(wordRange);
-        const word = rawWord.toLowerCase();
-        const instructionDescription = allInstructions[word];
-        if (instructionDescription !== undefined) {
-            return new vscode.Hover(instructionDescription);
+        const directiveRange = document.getWordRangeAtPosition(position, directivePattern);
+        if (directiveRange) {
+            const name = document.getText(directiveRange).slice(1);
+            const description = findDirective(name);
+            return description === undefined
+                ? undefined
+                : new vscode.Hover(describeDirective(name.toLowerCase(), description), directiveRange);
         }
 
-        const directiveDescription = directives[word];
-        if (directiveDescription !== undefined) {
-            return new vscode.Hover(directiveDescription);
+        const mnemonicRange = document.getWordRangeAtPosition(position, mnemonicPattern);
+        if (mnemonicRange) {
+            const mnemonic = document.getText(mnemonicRange);
+            const instruction = findInstruction(mnemonic);
+            if (instruction) {
+                return new vscode.Hover(describeInstruction(mnemonic, instruction), mnemonicRange);
+            }
         }
 
-        const registerDescription = registers[word];
-        if (registerDescription !== undefined) {
-            return new vscode.Hover(registerDescription);
+        const identifierRange = document.getWordRangeAtPosition(position, identifierPattern);
+        if (!identifierRange) {
+            return undefined;
         }
 
-        const constantDefinition = getConstantDefinitionFor(document, rawWord);
+        const constantDefinition = getConstantDefinitionFor(document, document.getText(identifierRange));
         if (constantDefinition) {
             const definitionLineText = document.lineAt(constantDefinition.range.start.line).text;
-            return new vscode.Hover(new vscode.MarkdownString().appendCodeblock(definitionLineText, "mips"));
+            return new vscode.Hover(
+                new vscode.MarkdownString().appendCodeblock(definitionLineText.trim(), "mips"),
+                identifierRange,
+            );
         }
 
         return undefined;

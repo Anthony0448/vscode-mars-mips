@@ -12,10 +12,10 @@
             "include": "#labels"
         },
         {
-            "include": "#instructions"
+            "include": "#registers"
         },
         {
-            "include": "#registers"
+            "include": "#instructions"
         },
         {
             "include": "#strings"
@@ -44,7 +44,7 @@
         },
         "directives": {
             "name": "keyword.control.directive.mips",
-            "match": "\\.(ascii[z]?|byte|half|word|float|double|align|space|globl|macro|end_macro|[k]?text|[k]?data)\\b"
+            "match": "(?<![\\w.$])\\.(?i:end_macro|include|asciiz|double|extern|align|ascii|float|globl|kdata|ktext|macro|space|byte|data|half|text|word|eqv|set)(?![\\w.])"
         },
         "labels": {
             "match": "([a-zA-Z_][a-zA-Z0-9_]*)\\s*(:)",
@@ -61,50 +61,54 @@
             "patterns": [
                 {
                     "name": "support.function.instruction.mips",
-                    "match": "\\b(add|addi|addiu|addu|and|andi|beq|bgez|bgezal|bgtz|blez|bltz|bltzal|bne|clo|clz|div|divu|j|jal|jalr|jr|lb|lbu|lh|lhu|lui|lw|lwc1|lwl|lwr|madd|maddu|mfhi|mflo|movn|movz|msub|msubu|mthi|mtlo|mult|multu|nor|or|ori|rotr|rotrv|sb|seb|seh|sh|sll|sllv|slt|slti|sltiu|sltu|sra|srav|srl|srlv|sub|subu|sw|swc1|syscall|teq|teqi|tge|tgei|tgeiu|tgeu|tlt|tlti|tltiu|tltu|tne|tnei|wsbh|xor|xori)\\b"
+                    "match": "(?<![\\w.$])(?i:floor\\.w\\.d|floor\\.w\\.s|round\\.w\\.d|round\\.w\\.s|trunc\\.w\\.d|trunc\\.w\\.s|ceil\\.w\\.d|ceil\\.w\\.s|cvt\\.d\\.s|cvt\\.d\\.w|cvt\\.s\\.d|cvt\\.s\\.w|cvt\\.w\\.d|cvt\\.w\\.s|syscall|bgezal|bltzal|c\\.eq\\.d|c\\.eq\\.s|c\\.le\\.d|c\\.le\\.s|c\\.lt\\.d|c\\.lt\\.s|movf\\.d|movf\\.s|movn\\.d|movn\\.s|movt\\.d|movt\\.s|movz\\.d|movz\\.s|sqrt\\.d|sqrt\\.s|abs\\.d|abs\\.s|add\\.d|add\\.s|addiu|break|div\\.d|div\\.s|maddu|mov\\.d|mov\\.s|msubu|mul\\.d|mul\\.s|multu|neg\\.d|neg\\.s|sltiu|sub\\.d|sub\\.s|tgeiu|tltiu|addi|addu|andi|bc1f|bc1t|bgez|bgtz|blez|bltz|divu|eret|jalr|ldc1|lwc1|madd|mfc0|mfc1|mfhi|mflo|movf|movn|movt|movz|msub|mtc0|mtc1|mthi|mtlo|mult|sdc1|sllv|slti|sltu|srav|srlv|subu|swc1|teqi|tgei|tgeu|tlti|tltu|tnei|xori|add|and|beq|bne|clo|clz|div|jal|lbu|lhu|lui|lwl|lwr|mul|nop|nor|ori|sll|slt|sra|srl|sub|swl|swr|teq|tge|tlt|tne|xor|jr|lb|lh|ll|lw|or|sb|sc|sh|sw|j)(?![\\w.])"
                 },
                 {
                     "name": "support.function.pseudoinstruction.mips",
-                    "match": "\\b(abs|b|bal|begin|beqz|bge|bgeu|bgt|bgtu|ble|bleu|blt|bltu|bnez|copy|decr|end|incr|la|li|mod|modu|move|mul|neg|negu|nop|not|pop|push|rem|remu|rol|ror|seq|sge|sgeu|sgt|sgtu|sle|sleu|sne|zeb|zeh)\\b"
+                    "match": "(?<![\\w.$])(?i:mfc1\\.d|mtc1\\.d|mulou|subiu|beqz|bgeu|bgtu|bleu|bltu|bnez|move|mulo|mulu|negu|remu|sgeu|sgtu|sleu|subi|ulhu|abs|bge|bgt|ble|blt|l\\.d|l\\.s|neg|not|rem|rol|ror|s\\.d|s\\.s|seq|sge|sgt|sle|sne|ulh|ulw|ush|usw|la|ld|li|sd|b)(?![\\w.])"
                 }
             ]
         },
         "registers": {
             "patterns": [
                 {
-                    "name": "keyword.operator.register.number.mips",
-                    "match": "(\\$([0-9]|1[0-9]|2[0-9]|3[01]))\\b"
+                    "name": "variable.language.register.number.mips",
+                    "match": "(\\$(3[01]|[12][0-9]|[0-9]))\\b"
                 },
                 {
-                    "name": "keyword.operator.register.zero.mips",
+                    "name": "variable.language.register.zero.mips",
                     "match": "(\\$zero)\\b"
                 },
                 {
-                    "name": "keyword.operator.register.at.mips",
+                    "name": "variable.language.register.at.mips",
                     "match": "(\\$at)\\b"
                 },
                 {
-                    "name": "keyword.operator.register.value.mips",
+                    "name": "variable.language.register.value.mips",
                     "match": "(\\$v[0-1])\\b"
                 },
                 {
-                    "name": "keyword.operator.register.argument.mips",
+                    "name": "variable.language.register.argument.mips",
                     "match": "(\\$a[0-3])\\b"
                 },
                 {
-                    "name": "keyword.operator.register.temporary.mips",
+                    "name": "variable.language.register.temporary.mips",
                     "match": "(\\$t[0-9])\\b"
                 },
                 {
-                    "name": "keyword.operator.register.saved.mips",
+                    "name": "variable.language.register.saved.mips",
                     "match": "(\\$s[0-7])\\b"
                 },
                 {
-                    "name": "keyword.operator.register.kernel.mips",
+                    "name": "variable.language.register.kernel.mips",
                     "match": "(\\$k[0-1])\\b"
                 },
                 {
-                    "name": "keyword.operator.register.pointer.mips",
+                    "name": "variable.language.register.float.mips",
+                    "match": "(\\$f(3[01]|[12][0-9]|[0-9]))\\b"
+                },
+                {
+                    "name": "variable.language.register.pointer.mips",
                     "match": "\\$([gsf]p|ra)\\b"
                 }
             ]
